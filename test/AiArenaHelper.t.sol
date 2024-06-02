@@ -25,7 +25,8 @@ contract AiArenaHelperTest is Test {
     //////////////////////////////////////////////////////////////*/
 
     uint8[][] internal _probabilities;
-    address internal constant _DELEGATED_ADDRESS = 0x22F4441ad6DbD602dFdE5Cd8A38F6CAdE68860b0;
+    address internal constant _DELEGATED_ADDRESS =
+        0x22F4441ad6DbD602dFdE5Cd8A38F6CAdE68860b0;
     address internal _ownerAddress;
     address internal _treasuryAddress;
     address internal _neuronContributorAddress;
@@ -44,12 +45,12 @@ contract AiArenaHelperTest is Test {
     Neuron internal _neuronContract;
 
     function getProb() public {
-        _probabilities.push([25, 25, 13, 13, 9, 9]);
-        _probabilities.push([25, 25, 13, 13, 9, 1]);
-        _probabilities.push([25, 25, 13, 13, 9, 10]);
-        _probabilities.push([25, 25, 13, 13, 9, 23]);
-        _probabilities.push([25, 25, 13, 13, 9, 1]);
-        _probabilities.push([25, 25, 13, 13, 9, 3]);
+        _probabilities.push([25, 25, 13, 13, 9, 9]); // heads
+        _probabilities.push([25, 25, 13, 13, 9, 1]); // eyes
+        _probabilities.push([25, 25, 13, 13, 9, 10]); // mouth
+        _probabilities.push([25, 25, 13, 13, 9, 23]); // body
+        _probabilities.push([25, 25, 13, 13, 9, 1]); // hands
+        _probabilities.push([25, 25, 13, 13, 9, 3]); // feet
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -64,7 +65,11 @@ contract AiArenaHelperTest is Test {
         _neuronContributorAddress = vm.addr(2);
         getProb();
 
-        _fighterFarmContract = new FighterFarm(_ownerAddress, _DELEGATED_ADDRESS, _treasuryAddress);
+        _fighterFarmContract = new FighterFarm(
+            _ownerAddress,
+            _DELEGATED_ADDRESS,
+            _treasuryAddress
+        );
 
         _helperContract = new AiArenaHelper(_probabilities);
 
@@ -74,24 +79,49 @@ contract AiArenaHelperTest is Test {
 
         _gameItemsContract = new GameItems(_ownerAddress, _treasuryAddress);
 
-        _voltageManagerContract = new VoltageManager(_ownerAddress, address(_gameItemsContract));
-
-        _neuronContract = new Neuron(_ownerAddress, _treasuryAddress, _neuronContributorAddress);
-
-        _rankedBattleContract = new RankedBattle(
-            _ownerAddress, address(_fighterFarmContract), _DELEGATED_ADDRESS, address(_voltageManagerContract)
+        _voltageManagerContract = new VoltageManager(
+            _ownerAddress,
+            address(_gameItemsContract)
         );
 
-        _rankedBattleContract.instantiateNeuronContract(address(_neuronContract));
+        _neuronContract = new Neuron(
+            _ownerAddress,
+            _treasuryAddress,
+            _neuronContributorAddress
+        );
 
-        _mergingPoolContract =
-            new MergingPool(_ownerAddress, address(_rankedBattleContract), address(_fighterFarmContract));
+        _rankedBattleContract = new RankedBattle(
+            _ownerAddress,
+            address(_fighterFarmContract),
+            _DELEGATED_ADDRESS,
+            address(_voltageManagerContract)
+        );
 
-        _fighterFarmContract.setMergingPoolAddress(address(_mergingPoolContract));
-        _fighterFarmContract.instantiateAIArenaHelperContract(address(_helperContract));
-        _fighterFarmContract.instantiateMintpassContract(address(_mintPassContract));
-        _fighterFarmContract.instantiateNeuronContract(address(_neuronContract));
-        _fighterFarmContract.setMergingPoolAddress(address(_mergingPoolContract));
+        _rankedBattleContract.instantiateNeuronContract(
+            address(_neuronContract)
+        );
+
+        _mergingPoolContract = new MergingPool(
+            _ownerAddress,
+            address(_rankedBattleContract),
+            address(_fighterFarmContract)
+        );
+
+        _fighterFarmContract.setMergingPoolAddress(
+            address(_mergingPoolContract)
+        );
+        _fighterFarmContract.instantiateAIArenaHelperContract(
+            address(_helperContract)
+        );
+        _fighterFarmContract.instantiateMintpassContract(
+            address(_mintPassContract)
+        );
+        _fighterFarmContract.instantiateNeuronContract(
+            address(_neuronContract)
+        );
+        _fighterFarmContract.setMergingPoolAddress(
+            address(_mergingPoolContract)
+        );
     }
 
     /// @notice Test owner transferring ownership and new owner calling only owner functions.
@@ -145,8 +175,8 @@ contract AiArenaHelperTest is Test {
         uint8 generation = 1;
         uint8 iconsType = 1;
         bool dendroidBool = false;
-        FighterOps.FighterPhysicalAttributes memory physAttrs =
-            _helperContract.createPhysicalAttributes(dna, generation, iconsType, dendroidBool);
+        FighterOps.FighterPhysicalAttributes memory physAttrs = _helperContract
+            .createPhysicalAttributes(dna, generation, iconsType, dendroidBool);
         assertEq(physAttrs.head, 0);
     }
 
@@ -156,8 +186,8 @@ contract AiArenaHelperTest is Test {
         uint8 generation = 0;
         uint8 iconsType = 0;
         bool dendroidBool = true;
-        FighterOps.FighterPhysicalAttributes memory physAttrs =
-            _helperContract.createPhysicalAttributes(dna, generation, iconsType, dendroidBool);
+        FighterOps.FighterPhysicalAttributes memory physAttrs = _helperContract
+            .createPhysicalAttributes(dna, generation, iconsType, dendroidBool);
         assertEq(physAttrs.head, 99);
     }
 
@@ -188,6 +218,10 @@ contract AiArenaHelperTest is Test {
     /// @notice Test getting the index of the attribute in the probabilities list.
     function testDnaToIndex() public {
         assertEq(_helperContract.dnaToIndex(0, 100, "head"), 0);
+        // @note when rarity decrease, the output jump from 0 to 6, then decrease to 1
+        assertEq(_helperContract.dnaToIndex(0, 95, "head"), 0);
+        assertEq(_helperContract.dnaToIndex(0, 90, "head"), 6);
+        assertEq(_helperContract.dnaToIndex(0, 0, "head"), 1);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -197,7 +231,12 @@ contract AiArenaHelperTest is Test {
     /// @notice Helper function to mint an fighter nft to an address.
     function _mintFromMergingPool(address to) internal {
         vm.prank(address(_mergingPoolContract));
-        _fighterFarmContract.mintFromMergingPool(to, "_neuralNetHash", "original", [uint256(1), uint256(80)]);
+        _fighterFarmContract.mintFromMergingPool(
+            to,
+            "_neuralNetHash",
+            "original",
+            [uint256(1), uint256(80)]
+        );
     }
 
     /// @notice Helper function to fund an account with 4k $NRN tokens.
@@ -207,7 +246,12 @@ contract AiArenaHelperTest is Test {
         assertEq(4_000 * 10 ** 18 == _neuronContract.balanceOf(user), true);
     }
 
-    function onERC721Received(address, address, uint256, bytes memory) public pure returns (bytes4) {
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes memory
+    ) public pure returns (bytes4) {
         // Handle the token transfer here
         return this.onERC721Received.selector;
     }
