@@ -1,3 +1,15 @@
+# My Findings
+1. `MergingPool.sol` `function claimRewards` will fail if ther user has >= 10 wins, POC implemented in `MergingPool.t.sol` `function testClaimRewardsFailForMoreThan10Wins`
+2. `RankedBattle.sol`, if a figher stake < 10**4/bpsLostPerLoss NRN, then the fighter can keep losing without losing anything, so someone can potentially use this to keep earning points. POC implemented in `RankedBattle.t.sol` `function testNoNRNlossIfStakeTooSmall`
+3. `RankedBattle.sol`, if a fighter have all NRN at risk, the owner can unlock the fighter and transfer fighter to another person, now if the new owner win, updateBattleRecord will fail. POC in `RankedBattle.t.sol` `testTransferWithAllNrnAtRisk`
+
+# Learnings
+- H-01, some native transfer function is not overrided (e.g. ECR721 safeTransferFrom(..., data)) 
+- H-05, same as my findings #2 
+- H-08, consider the caller may be another smart contract instead of EOA, minting ERC721 will lead to reentrancy
+- M-04, loop will lead to block gas limit
+- M-06, similar to my findings #3, but it goes even further which show how user can steal tokens from it
+
 # AI Arena audit details
 
 - Total Prize Pool: $60,500 in USDC

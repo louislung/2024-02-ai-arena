@@ -19,7 +19,8 @@ contract MergingPoolTest is Test {
     //////////////////////////////////////////////////////////////*/
 
     uint8[][] internal _probabilities;
-    address internal constant _DELEGATED_ADDRESS = 0x22F4441ad6DbD602dFdE5Cd8A38F6CAdE68860b0;
+    address internal constant _DELEGATED_ADDRESS =
+        0x22F4441ad6DbD602dFdE5Cd8A38F6CAdE68860b0;
     address internal _ownerAddress;
     address internal _treasuryAddress;
     address internal _neuronContributorAddress;
@@ -56,7 +57,11 @@ contract MergingPoolTest is Test {
         _neuronContributorAddress = vm.addr(2);
         getProb();
 
-        _fighterFarmContract = new FighterFarm(_ownerAddress, _DELEGATED_ADDRESS, _treasuryAddress);
+        _fighterFarmContract = new FighterFarm(
+            _ownerAddress,
+            _DELEGATED_ADDRESS,
+            _treasuryAddress
+        );
 
         _helperContract = new AiArenaHelper(_probabilities);
 
@@ -66,24 +71,49 @@ contract MergingPoolTest is Test {
 
         _gameItemsContract = new GameItems(_ownerAddress, _treasuryAddress);
 
-        _voltageManagerContract = new VoltageManager(_ownerAddress, address(_gameItemsContract));
-
-        _neuronContract = new Neuron(_ownerAddress, _treasuryAddress, _neuronContributorAddress);
-
-        _rankedBattleContract = new RankedBattle(
-            _ownerAddress, address(_fighterFarmContract), _DELEGATED_ADDRESS, address(_voltageManagerContract)
+        _voltageManagerContract = new VoltageManager(
+            _ownerAddress,
+            address(_gameItemsContract)
         );
 
-        _rankedBattleContract.instantiateNeuronContract(address(_neuronContract));
+        _neuronContract = new Neuron(
+            _ownerAddress,
+            _treasuryAddress,
+            _neuronContributorAddress
+        );
 
-        _mergingPoolContract =
-            new MergingPool(_ownerAddress, address(_rankedBattleContract), address(_fighterFarmContract));
+        _rankedBattleContract = new RankedBattle(
+            _ownerAddress,
+            address(_fighterFarmContract),
+            _DELEGATED_ADDRESS,
+            address(_voltageManagerContract)
+        );
 
-        _fighterFarmContract.setMergingPoolAddress(address(_mergingPoolContract));
-        _fighterFarmContract.instantiateAIArenaHelperContract(address(_helperContract));
-        _fighterFarmContract.instantiateMintpassContract(address(_mintPassContract));
-        _fighterFarmContract.instantiateNeuronContract(address(_neuronContract));
-        _fighterFarmContract.setMergingPoolAddress(address(_mergingPoolContract));
+        _rankedBattleContract.instantiateNeuronContract(
+            address(_neuronContract)
+        );
+
+        _mergingPoolContract = new MergingPool(
+            _ownerAddress,
+            address(_rankedBattleContract),
+            address(_fighterFarmContract)
+        );
+
+        _fighterFarmContract.setMergingPoolAddress(
+            address(_mergingPoolContract)
+        );
+        _fighterFarmContract.instantiateAIArenaHelperContract(
+            address(_helperContract)
+        );
+        _fighterFarmContract.instantiateMintpassContract(
+            address(_mintPassContract)
+        );
+        _fighterFarmContract.instantiateNeuronContract(
+            address(_neuronContract)
+        );
+        _fighterFarmContract.setMergingPoolAddress(
+            address(_mergingPoolContract)
+        );
     }
 
     /// @notice Test owner transferring ownership and new owner calling only owner functions.
@@ -140,8 +170,14 @@ contract MergingPoolTest is Test {
         _winners[1] = 1;
         _mergingPoolContract.pickWinner(_winners);
         assertEq(_mergingPoolContract.isSelectionComplete(0), true);
-        assertEq(_mergingPoolContract.winnerAddresses(0, 0) == _ownerAddress, true);
-        assertEq(_mergingPoolContract.winnerAddresses(0, 1) == _DELEGATED_ADDRESS, true);
+        assertEq(
+            _mergingPoolContract.winnerAddresses(0, 0) == _ownerAddress,
+            true
+        );
+        assertEq(
+            _mergingPoolContract.winnerAddresses(0, 1) == _DELEGATED_ADDRESS,
+            true
+        );
     }
 
     /// @notice Test of admin picking winners with wrong length.
@@ -169,12 +205,22 @@ contract MergingPoolTest is Test {
         // winners of roundId 0 are picked
         _mergingPoolContract.pickWinner(_winners);
         assertEq(_mergingPoolContract.isSelectionComplete(0), true);
-        assertEq(_mergingPoolContract.winnerAddresses(0, 0) == _ownerAddress, true);
+        assertEq(
+            _mergingPoolContract.winnerAddresses(0, 0) == _ownerAddress,
+            true
+        );
         // winner matches ownerOf tokenId
-        assertEq(_mergingPoolContract.winnerAddresses(0, 1) == _DELEGATED_ADDRESS, true);
+        assertEq(
+            _mergingPoolContract.winnerAddresses(0, 1) == _DELEGATED_ADDRESS,
+            true
+        );
         string[] memory _modelURIs = new string[](2);
-        _modelURIs[0] = "ipfs://bafybeiaatcgqvzvz3wrjiqmz2ivcu2c5sqxgipv5w2hzy4pdlw7hfox42m";
-        _modelURIs[1] = "ipfs://bafybeiaatcgqvzvz3wrjiqmz2ivcu2c5sqxgipv5w2hzy4pdlw7hfox42m";
+        _modelURIs[
+            0
+        ] = "ipfs://bafybeiaatcgqvzvz3wrjiqmz2ivcu2c5sqxgipv5w2hzy4pdlw7hfox42m";
+        _modelURIs[
+            1
+        ] = "ipfs://bafybeiaatcgqvzvz3wrjiqmz2ivcu2c5sqxgipv5w2hzy4pdlw7hfox42m";
         string[] memory _modelTypes = new string[](2);
         _modelTypes[0] = "original";
         _modelTypes[1] = "original";
@@ -186,13 +232,72 @@ contract MergingPoolTest is Test {
         // winners of roundId 1 are picked
         _mergingPoolContract.pickWinner(_winners);
         // winner claims rewards for previous roundIds
-        _mergingPoolContract.claimRewards(_modelURIs, _modelTypes, _customAttributes);
+        _mergingPoolContract.claimRewards(
+            _modelURIs,
+            _modelTypes,
+            _customAttributes
+        );
         // other winner claims rewards for previous roundIds
         vm.prank(_DELEGATED_ADDRESS);
-        _mergingPoolContract.claimRewards(_modelURIs, _modelTypes, _customAttributes);
-        uint256 numRewards = _mergingPoolContract.getUnclaimedRewards(_DELEGATED_ADDRESS);
+        _mergingPoolContract.claimRewards(
+            _modelURIs,
+            _modelTypes,
+            _customAttributes
+        );
+        uint256 numRewards = _mergingPoolContract.getUnclaimedRewards(
+            _DELEGATED_ADDRESS
+        );
         emit log_uint(numRewards);
         assertEq(numRewards, 0);
+    }
+
+    // @audit-issue test that if user has >= 10 wins, he wont be able to claim any rewards
+    function testClaimRewardsFailForMoreThan10Wins() public {
+        _mintFromMergingPool(_ownerAddress);
+        _mintFromMergingPool(_DELEGATED_ADDRESS);
+        assertEq(_fighterFarmContract.ownerOf(0), _ownerAddress);
+        assertEq(_fighterFarmContract.ownerOf(1), _DELEGATED_ADDRESS);
+        uint32 rounds = 10;
+        uint256[] memory _winners = new uint256[](2);
+        string[] memory _modelURIs = new string[](rounds);
+        string[] memory _modelTypes = new string[](rounds);
+        uint256[2][] memory _customAttributes = new uint256[2][](rounds);
+
+        _winners[0] = 0;
+        _winners[1] = 1;
+
+        for (uint32 j = 0; j < rounds; j++) {
+            console.log(j);
+            _mergingPoolContract.pickWinner(_winners);
+            _modelURIs[
+                j
+            ] = "ipfs://bafybeiaatcgqvzvz3wrjiqmz2ivcu2c5sqxgipv5w2hzy4pdlw7hfox42m";
+            _modelTypes[j] = "original";
+            _customAttributes[j][0] = uint256(1);
+            _customAttributes[j][1] = uint256(80);
+        }
+
+        vm.expectRevert();
+        _mergingPoolContract.claimRewards(
+            _modelURIs,
+            _modelTypes,
+            _customAttributes
+        );
+
+        // other winner claims rewards for previous roundIds
+        vm.prank(_DELEGATED_ADDRESS);
+        vm.expectRevert();
+        _mergingPoolContract.claimRewards(
+            _modelURIs,
+            _modelTypes,
+            _customAttributes
+        );
+
+        uint256 numRewards = _mergingPoolContract.getUnclaimedRewards(
+            _DELEGATED_ADDRESS
+        );
+        emit log_uint(numRewards);
+        assertEq(numRewards, 10);
     }
 
     /// @notice Test getting the unclaimed amount for an address owning 2 fighters that's been included in 2 rounds of picked winners.
@@ -206,11 +311,19 @@ contract MergingPoolTest is Test {
         _winners[1] = 1;
         _mergingPoolContract.pickWinner(_winners);
         assertEq(_mergingPoolContract.isSelectionComplete(0), true);
-        assertEq(_mergingPoolContract.winnerAddresses(0, 0) == _ownerAddress, true);
-        assertEq(_mergingPoolContract.winnerAddresses(0, 1) == _ownerAddress, true);
+        assertEq(
+            _mergingPoolContract.winnerAddresses(0, 0) == _ownerAddress,
+            true
+        );
+        assertEq(
+            _mergingPoolContract.winnerAddresses(0, 1) == _ownerAddress,
+            true
+        );
         // winners of roundId 1 are picked
         _mergingPoolContract.pickWinner(_winners);
-        uint256 numRewards = _mergingPoolContract.getUnclaimedRewards(_ownerAddress);
+        uint256 numRewards = _mergingPoolContract.getUnclaimedRewards(
+            _ownerAddress
+        );
         emit log_uint(numRewards);
         // since the owner has 2 fighters and 2 rounds have picked winners, the numRewards should be 4
         assertEq(numRewards, 4);
@@ -246,7 +359,9 @@ contract MergingPoolTest is Test {
         _mergingPoolContract.addPoints(0, 100);
         assertEq(_mergingPoolContract.totalPoints(), 100);
         // getFighterPoints for owners fighter
-        uint256[] memory fighterPoints = _mergingPoolContract.getFighterPoints(1);
+        uint256[] memory fighterPoints = _mergingPoolContract.getFighterPoints(
+            1
+        );
         assertEq(fighterPoints.length >= 1 && fighterPoints[0] == 100, true);
         // getFighterPoints for non existent fighter
         vm.expectRevert(stdError.indexOOBError);
@@ -260,7 +375,12 @@ contract MergingPoolTest is Test {
     /// @notice Helper function to mint an fighter nft to an address.
     function _mintFromMergingPool(address to) internal {
         vm.prank(address(_mergingPoolContract));
-        _fighterFarmContract.mintFromMergingPool(to, "_neuralNetHash", "original", [uint256(1), uint256(80)]);
+        _fighterFarmContract.mintFromMergingPool(
+            to,
+            "_neuralNetHash",
+            "original",
+            [uint256(1), uint256(80)]
+        );
     }
 
     /// @notice Helper function to fund an account with 4k $NRN tokens.
@@ -270,7 +390,12 @@ contract MergingPoolTest is Test {
         assertEq(4_000 * 10 ** 18 == _neuronContract.balanceOf(user), true);
     }
 
-    function onERC721Received(address, address, uint256, bytes memory) public pure returns (bytes4) {
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes memory
+    ) public pure returns (bytes4) {
         // Handle the token transfer here
         return this.onERC721Received.selector;
     }

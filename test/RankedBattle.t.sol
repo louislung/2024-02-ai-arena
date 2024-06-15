@@ -20,8 +20,10 @@ contract RankedBattleTest is Test {
     //////////////////////////////////////////////////////////////*/
 
     uint8[][] internal _probabilities;
-    address internal constant _DELEGATED_ADDRESS = 0x22F4441ad6DbD602dFdE5Cd8A38F6CAdE68860b0;
-    address internal constant _GAME_SERVER_ADDRESS = 0x7C0a2BAd62C664076eFE14b7f2d90BF6Fd3a6F6C;
+    address internal constant _DELEGATED_ADDRESS =
+        0x22F4441ad6DbD602dFdE5Cd8A38F6CAdE68860b0;
+    address internal constant _GAME_SERVER_ADDRESS =
+        0x7C0a2BAd62C664076eFE14b7f2d90BF6Fd3a6F6C;
     address internal _ownerAddress;
     address internal _treasuryAddress;
     address internal _neuronContributorAddress;
@@ -55,7 +57,11 @@ contract RankedBattleTest is Test {
         _neuronContributorAddress = vm.addr(2);
         getProb();
 
-        _fighterFarmContract = new FighterFarm(_ownerAddress, _DELEGATED_ADDRESS, _treasuryAddress);
+        _fighterFarmContract = new FighterFarm(
+            _ownerAddress,
+            _DELEGATED_ADDRESS,
+            _treasuryAddress
+        );
 
         _helperContract = new AiArenaHelper(_probabilities);
 
@@ -65,34 +71,67 @@ contract RankedBattleTest is Test {
 
         _gameItemsContract = new GameItems(_ownerAddress, _treasuryAddress);
 
-        _voltageManagerContract = new VoltageManager(_ownerAddress, address(_gameItemsContract));
-
-        _neuronContract = new Neuron(_ownerAddress, _treasuryAddress, _neuronContributorAddress);
-
-        _rankedBattleContract = new RankedBattle(
-            _ownerAddress, _GAME_SERVER_ADDRESS, address(_fighterFarmContract), address(_voltageManagerContract)
+        _voltageManagerContract = new VoltageManager(
+            _ownerAddress,
+            address(_gameItemsContract)
         );
 
-        _mergingPoolContract =
-            new MergingPool(_ownerAddress, address(_rankedBattleContract), address(_fighterFarmContract));
+        _neuronContract = new Neuron(
+            _ownerAddress,
+            _treasuryAddress,
+            _neuronContributorAddress
+        );
 
-        _stakeAtRiskContract =
-            new StakeAtRisk(_treasuryAddress, address(_neuronContract), address(_rankedBattleContract));
+        _rankedBattleContract = new RankedBattle(
+            _ownerAddress,
+            _GAME_SERVER_ADDRESS,
+            address(_fighterFarmContract),
+            address(_voltageManagerContract)
+        );
 
-        _voltageManagerContract.adjustAllowedVoltageSpenders(address(_rankedBattleContract), true);
+        _mergingPoolContract = new MergingPool(
+            _ownerAddress,
+            address(_rankedBattleContract),
+            address(_fighterFarmContract)
+        );
+
+        _stakeAtRiskContract = new StakeAtRisk(
+            _treasuryAddress,
+            address(_neuronContract),
+            address(_rankedBattleContract)
+        );
+
+        _voltageManagerContract.adjustAllowedVoltageSpenders(
+            address(_rankedBattleContract),
+            true
+        );
 
         _neuronContract.addStaker(address(_rankedBattleContract));
         _neuronContract.addMinter(address(_rankedBattleContract));
 
-        _rankedBattleContract.instantiateNeuronContract(address(_neuronContract));
-        _rankedBattleContract.instantiateMergingPoolContract(address(_mergingPoolContract));
-        _rankedBattleContract.setStakeAtRiskAddress(address(_stakeAtRiskContract));
+        _rankedBattleContract.instantiateNeuronContract(
+            address(_neuronContract)
+        );
+        _rankedBattleContract.instantiateMergingPoolContract(
+            address(_mergingPoolContract)
+        );
+        _rankedBattleContract.setStakeAtRiskAddress(
+            address(_stakeAtRiskContract)
+        );
 
-        _fighterFarmContract.setMergingPoolAddress(address(_mergingPoolContract));
+        _fighterFarmContract.setMergingPoolAddress(
+            address(_mergingPoolContract)
+        );
         _fighterFarmContract.addStaker(address(_rankedBattleContract));
-        _fighterFarmContract.instantiateAIArenaHelperContract(address(_helperContract));
-        _fighterFarmContract.instantiateMintpassContract(address(_mintPassContract));
-        _fighterFarmContract.instantiateNeuronContract(address(_neuronContract));
+        _fighterFarmContract.instantiateAIArenaHelperContract(
+            address(_helperContract)
+        );
+        _fighterFarmContract.instantiateMintpassContract(
+            address(_mintPassContract)
+        );
+        _fighterFarmContract.instantiateNeuronContract(
+            address(_neuronContract)
+        );
     }
 
     /// @notice Test owner transferring ownership and new owner calling only owner functions.
@@ -139,45 +178,60 @@ contract RankedBattleTest is Test {
 
     /// @notice Test owner setting the StakeAtRisk address and instantiating the contract.
     function testSetStakeAtRiskAddressFromOwner() public {
-        _rankedBattleContract.setStakeAtRiskAddress(address(_stakeAtRiskContract));
+        _rankedBattleContract.setStakeAtRiskAddress(
+            address(_stakeAtRiskContract)
+        );
     }
 
     /// @notice Test an non owner calling setStakeAtRiskAddress reverting.
     function testRevertSetStakeAtRiskAddressFromNonOwner() public {
         vm.prank(msg.sender);
         vm.expectRevert();
-        _rankedBattleContract.setStakeAtRiskAddress(address(_stakeAtRiskContract));
+        _rankedBattleContract.setStakeAtRiskAddress(
+            address(_stakeAtRiskContract)
+        );
     }
 
     /// @notice Test owner instantiating the Neuron contract.
     function testInstantiateNeuronContractFromOwner() public {
-        _rankedBattleContract.instantiateNeuronContract(address(_neuronContract));
+        _rankedBattleContract.instantiateNeuronContract(
+            address(_neuronContract)
+        );
     }
 
     /// @notice Test an non owner trying to instantiate Neuron contract reverts.
     function testRevertInstantiateNeuronContractFromNonOwner() public {
         vm.prank(msg.sender);
         vm.expectRevert();
-        _rankedBattleContract.instantiateNeuronContract(address(_neuronContract));
+        _rankedBattleContract.instantiateNeuronContract(
+            address(_neuronContract)
+        );
     }
 
     /// @notice Test owner instantiating the MergingPool contract.
     function testInstantiateMergingPoolContractFromOwner() public {
-        _rankedBattleContract.instantiateMergingPoolContract(address(_mergingPoolContract));
+        _rankedBattleContract.instantiateMergingPoolContract(
+            address(_mergingPoolContract)
+        );
     }
 
     /// @notice Test an non owner trying to instantiate MergingPool contract reverts.
     function testRevertInstantiateMergingPoolContractFromNonOwner() public {
         vm.prank(msg.sender);
         vm.expectRevert();
-        _rankedBattleContract.instantiateNeuronContract(address(_mergingPoolContract));
+        _rankedBattleContract.instantiateNeuronContract(
+            address(_mergingPoolContract)
+        );
     }
 
     /// @notice Test an admin setting the distribution amount on Neuron for a round.
     function testSetRankedNrnDistributionFromAdmin() public {
         uint256 newDistribution = 2000;
         _rankedBattleContract.setRankedNrnDistribution(newDistribution);
-        assertEq(_rankedBattleContract.rankedNrnDistribution(0), newDistribution * 10 ** 18);
+        assertEq(
+            _rankedBattleContract.rankedNrnDistribution(0),
+            newDistribution * 10 ** 18
+        );
     }
 
     /// @notice Test an non admin setting the distribution amount on Neuron for a round reverting.
@@ -186,7 +240,10 @@ contract RankedBattleTest is Test {
         uint256 newDistribution = 2000;
         vm.expectRevert();
         _rankedBattleContract.setRankedNrnDistribution(newDistribution);
-        assertEq(_rankedBattleContract.rankedNrnDistribution(0), 5000 * 10 ** 18);
+        assertEq(
+            _rankedBattleContract.rankedNrnDistribution(0),
+            5000 * 10 ** 18
+        );
     }
 
     /// @notice Test an admin setting the basis points lost per ranked match lost while in a point deficit.
@@ -242,7 +299,13 @@ contract RankedBattleTest is Test {
         _fundUserWith4kNeuronByTreasury(staker);
         assertEq(_neuronContract.balanceOf(staker) >= 4_000 * 10 ** 18, true);
         assertEq(_fighterFarmContract.ownerOf(0), staker);
-        assertEq(_neuronContract.hasRole(keccak256("STAKER_ROLE"), address(_rankedBattleContract)), true);
+        assertEq(
+            _neuronContract.hasRole(
+                keccak256("STAKER_ROLE"),
+                address(_rankedBattleContract)
+            ),
+            true
+        );
         vm.prank(staker);
         _rankedBattleContract.stakeNRN(3_000 * 10 ** 18, 0);
         assertEq(_rankedBattleContract.amountStaked(0), 3_000 * 10 ** 18);
@@ -255,7 +318,13 @@ contract RankedBattleTest is Test {
         _fundUserWith4kNeuronByTreasury(staker);
         assertEq(_neuronContract.balanceOf(staker) >= 4_000 * 10 ** 18, true);
         assertEq(_fighterFarmContract.ownerOf(0), staker);
-        assertEq(_neuronContract.hasRole(keccak256("STAKER_ROLE"), address(_rankedBattleContract)), true);
+        assertEq(
+            _neuronContract.hasRole(
+                keccak256("STAKER_ROLE"),
+                address(_rankedBattleContract)
+            ),
+            true
+        );
         vm.prank(staker);
         vm.expectRevert("Stake amount exceeds balance");
         _rankedBattleContract.stakeNRN(5_000 * 10 ** 18, 0);
@@ -348,8 +417,12 @@ contract RankedBattleTest is Test {
         vm.prank(address(_GAME_SERVER_ADDRESS));
         _rankedBattleContract.updateBattleRecord(1, 50, 0, 1500, true);
         _rankedBattleContract.setNewRound();
-        emit log_uint(_rankedBattleContract.accumulatedPointsPerAddress(staker, 0));
-        emit log_uint(_rankedBattleContract.accumulatedPointsPerAddress(claimee, 0));
+        emit log_uint(
+            _rankedBattleContract.accumulatedPointsPerAddress(staker, 0)
+        );
+        emit log_uint(
+            _rankedBattleContract.accumulatedPointsPerAddress(claimee, 0)
+        );
         emit log_uint(_rankedBattleContract.accumulatedPointsPerFighter(0, 0));
         emit log_uint(_rankedBattleContract.accumulatedPointsPerFighter(1, 0));
         vm.prank(staker);
@@ -372,8 +445,11 @@ contract RankedBattleTest is Test {
         vm.prank(address(_GAME_SERVER_ADDRESS));
         _rankedBattleContract.updateBattleRecord(0, 50, 0, 1500, true);
         _rankedBattleContract.setNewRound();
-        assertEq(_rankedBattleContract.accumulatedPointsPerFighter(0, 0) > 0, true);
-        (uint256 wins,,) = _rankedBattleContract.fighterBattleRecord(tokenId);
+        assertEq(
+            _rankedBattleContract.accumulatedPointsPerFighter(0, 0) > 0,
+            true
+        );
+        (uint256 wins, , ) = _rankedBattleContract.fighterBattleRecord(tokenId);
         assertEq(wins, 1);
     }
 
@@ -388,7 +464,7 @@ contract RankedBattleTest is Test {
         assertEq(_rankedBattleContract.amountStaked(0), 3_000 * 10 ** 18);
         vm.prank(address(_GAME_SERVER_ADDRESS));
         _rankedBattleContract.updateBattleRecord(0, 50, 1, 1500, true);
-        (, uint256 ties,) = _rankedBattleContract.fighterBattleRecord(tokenId);
+        (, uint256 ties, ) = _rankedBattleContract.fighterBattleRecord(tokenId);
         assertEq(ties, 1);
     }
 
@@ -403,7 +479,9 @@ contract RankedBattleTest is Test {
         assertEq(_rankedBattleContract.amountStaked(0), 3_000 * 10 ** 18);
         vm.prank(address(_GAME_SERVER_ADDRESS));
         _rankedBattleContract.updateBattleRecord(0, 50, 2, 1500, true);
-        (,, uint256 losses) = _rankedBattleContract.fighterBattleRecord(tokenId);
+        (, , uint256 losses) = _rankedBattleContract.fighterBattleRecord(
+            tokenId
+        );
         assertEq(losses, 1);
     }
 
@@ -418,7 +496,8 @@ contract RankedBattleTest is Test {
         assertEq(_rankedBattleContract.amountStaked(0), 3_000 * 10 ** 18);
         vm.prank(address(_GAME_SERVER_ADDRESS));
         _rankedBattleContract.updateBattleRecord(0, 50, 0, 1500, true);
-        (uint32 wins, uint32 ties, uint32 losses) = _rankedBattleContract.getBattleRecord(tokenId);
+        (uint32 wins, uint32 ties, uint32 losses) = _rankedBattleContract
+            .getBattleRecord(tokenId);
         assertEq(wins, 1);
         assertEq(ties, 0);
         assertEq(losses, 0);
@@ -434,8 +513,11 @@ contract RankedBattleTest is Test {
         assertEq(_rankedBattleContract.amountStaked(0), 3_000 * 10 ** 18);
         vm.prank(address(_GAME_SERVER_ADDRESS));
         _rankedBattleContract.updateBattleRecord(0, 50, 0, 1500, true);
-        (uint256 roundId, uint256 rankedNrnDistribution, uint256 totalAccumulatedPoints) =
-            _rankedBattleContract.getCurrentStakingData();
+        (
+            uint256 roundId,
+            uint256 rankedNrnDistribution,
+            uint256 totalAccumulatedPoints
+        ) = _rankedBattleContract.getCurrentStakingData();
         assertEq(roundId, 0);
         assertEq(rankedNrnDistribution, 5000 * 10 ** 18);
         assertEq(totalAccumulatedPoints > 0, true);
@@ -458,11 +540,105 @@ contract RankedBattleTest is Test {
         vm.prank(address(_GAME_SERVER_ADDRESS));
         _rankedBattleContract.updateBattleRecord(0, 50, 0, 1500, true);
         _rankedBattleContract.setNewRound();
-        assertEq(_rankedBattleContract.accumulatedPointsPerFighter(0, 0) > 0, true);
-        (uint256 wins,,) = _rankedBattleContract.fighterBattleRecord(tokenId);
+        assertEq(
+            _rankedBattleContract.accumulatedPointsPerFighter(0, 0) > 0,
+            true
+        );
+        (uint256 wins, , ) = _rankedBattleContract.fighterBattleRecord(tokenId);
         assertEq(wins, 1);
         uint256 unclaimedNRN = _rankedBattleContract.getUnclaimedNRN(player);
         assertEq(unclaimedNRN, 5000 * 10 ** 18);
+    }
+
+    // @audit test if amountStaked[tokenId] < 10 ** 4 / bpsLostPerLoss, then curStakeAtRisk always 0 and when user lost, no NRN will be at risk
+    // the fighter can keep taking battle and let other figher keep winning points
+    function testNoNRNlossIfStakeTooSmall() public {
+        address player = vm.addr(3);
+        _mintFromMergingPool(player);
+        uint8 tokenId = 0;
+        vm.prank(_treasuryAddress);
+        _neuronContract.transfer(player, 10 ** 4 / 10 - 1);
+        vm.prank(player);
+        _rankedBattleContract.stakeNRN(10 ** 4 / 10 - 1, 0);
+        console.log(
+            "player amountStaked: ",
+            _rankedBattleContract.amountStaked(0)
+        );
+
+        address player2 = vm.addr(4);
+        _mintFromMergingPool(player2);
+        vm.prank(_treasuryAddress);
+        _neuronContract.transfer(player2, 10 ** 4 / 10 - 1);
+        vm.prank(player2);
+        _rankedBattleContract.stakeNRN(10 ** 4 / 10 - 1, 1);
+        console.log(
+            "player2 amountStaked: ",
+            _rankedBattleContract.amountStaked(1)
+        );
+
+        vm.prank(address(_GAME_SERVER_ADDRESS));
+        _rankedBattleContract.updateBattleRecord(0, 50, 2, 1500, true);
+        console.log(
+            "player amountStaked: ",
+            _rankedBattleContract.amountStaked(0),
+            _rankedBattleContract.accumulatedPointsPerFighter(0, 0)
+        );
+        vm.prank(address(_GAME_SERVER_ADDRESS));
+        _rankedBattleContract.updateBattleRecord(1, 50, 0, 1500, true);
+        console.log(
+            "player2 amountStaked: ",
+            _rankedBattleContract.amountStaked(1),
+            _rankedBattleContract.accumulatedPointsPerFighter(1, 0)
+        );
+
+        _rankedBattleContract.setNewRound();
+        console.log(
+            "player amountStaked: ",
+            _rankedBattleContract.amountStaked(0)
+        );
+        assertEq(
+            _rankedBattleContract.accumulatedPointsPerFighter(1, 0) > 0,
+            true
+        );
+    }
+
+    // @audit test transfer with all NRN at risk
+    function testTransferWithAllNrnAtRisk() public {
+        _rankedBattleContract.setBpsLostPerLoss(1000);
+
+        address player = vm.addr(3);
+        _mintFromMergingPool(player);
+        uint8 tokenId = 0;
+        vm.prank(_treasuryAddress);
+        _neuronContract.transfer(player, 1 * 10 ** 18);
+        vm.prank(player);
+        _rankedBattleContract.stakeNRN(1 * 10 ** 18, 0);
+        console.log(
+            "player amountStaked: ",
+            _rankedBattleContract.amountStaked(0)
+        );
+
+        for (uint i = 0; i < 10; i++) {
+            vm.prank(address(_GAME_SERVER_ADDRESS));
+            _rankedBattleContract.updateBattleRecord(0, 50, 2, 1500, true);
+            console.log(
+                "player amountStaked: ",
+                _rankedBattleContract.amountStaked(0),
+                _fighterFarmContract.fighterStaked(0)
+            );
+        }
+
+        vm.prank(player);
+        _rankedBattleContract.unstakeNRN(0, 0);
+        console.log("fighter Staked: ", _fighterFarmContract.fighterStaked(0));
+
+        // transfer figher owner to player2
+        // now if player 2 win, StakeAtRisk::reclaimNRN will fail
+        address player2 = vm.addr(4);
+        vm.prank(player);
+        _fighterFarmContract.transferFrom(player, player2, 0);
+        vm.prank(address(_GAME_SERVER_ADDRESS));
+        _rankedBattleContract.updateBattleRecord(0, 50, 0, 1500, true); // this will fail
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -472,7 +648,12 @@ contract RankedBattleTest is Test {
     /// @notice Helper function to mint an fighter nft to an address.
     function _mintFromMergingPool(address to) internal {
         vm.prank(address(_mergingPoolContract));
-        _fighterFarmContract.mintFromMergingPool(to, "_neuralNetHash", "original", [uint256(1), uint256(80)]);
+        _fighterFarmContract.mintFromMergingPool(
+            to,
+            "_neuralNetHash",
+            "original",
+            [uint256(1), uint256(80)]
+        );
     }
 
     /// @notice Helper function to fund an account with 4k $NRN tokens.
@@ -482,7 +663,12 @@ contract RankedBattleTest is Test {
         assertEq(4_000 * 10 ** 18 == _neuronContract.balanceOf(user), true);
     }
 
-    function onERC721Received(address, address, uint256, bytes memory) public pure returns (bytes4) {
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes memory
+    ) public pure returns (bytes4) {
         // Handle the token transfer here
         return this.onERC721Received.selector;
     }

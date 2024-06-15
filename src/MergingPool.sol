@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
-import { FighterFarm } from "./FighterFarm.sol";
+import {FighterFarm} from "./FighterFarm.sol";
 
 /// @title MergingPool
 /// @author ArenaX Labs Inc.
 /// @notice This contract allows users to potentially earn a new fighter NFT.
 contract MergingPool {
-
     /*//////////////////////////////////////////////////////////////
                                 EVENTS
     //////////////////////////////////////////////////////////////*/
@@ -29,7 +28,7 @@ contract MergingPool {
     uint256 public roundId = 0;
 
     /// @notice Total points.
-    uint256 public totalPoints = 0;    
+    uint256 public totalPoints = 0;
 
     /// The address that has owner privileges (initially the contract deployer).
     address _ownerAddress;
@@ -51,7 +50,7 @@ contract MergingPool {
     mapping(uint256 => uint256) public fighterPoints;
 
     /// @notice Mapping of roundId to winner addresses list.
-    mapping(uint256 => address[]) public winnerAddresses;    
+    mapping(uint256 => address[]) public winnerAddresses;
 
     /// @notice Mapping of round id to an indication of whether winners have been selected yet.
     mapping(uint256 => bool) public isSelectionComplete;
@@ -69,8 +68,8 @@ contract MergingPool {
     /// @param rankedBattleAddress Address of ranked battle contract.
     /// @param fighterFarmAddress Address of fighter farm contract.
     constructor(
-        address ownerAddress, 
-        address rankedBattleAddress, 
+        address ownerAddress,
+        address rankedBattleAddress,
         address fighterFarmAddress
     ) {
         _ownerAddress = ownerAddress;
@@ -98,15 +97,17 @@ contract MergingPool {
     function adjustAdminAccess(address adminAddress, bool access) external {
         require(msg.sender == _ownerAddress);
         isAdmin[adminAddress] = access;
-    }   
+    }
 
     /// @notice Change the number of winners per competition period.
     /// @dev Only admins are authorized to call this function.
     /// @param newWinnersPerPeriodAmount The new number of winners per period.
-    function updateWinnersPerPeriod(uint256 newWinnersPerPeriodAmount) external {
+    function updateWinnersPerPeriod(
+        uint256 newWinnersPerPeriodAmount
+    ) external {
         require(isAdmin[msg.sender]);
         winnersPerPeriod = newWinnersPerPeriodAmount;
-    }    
+    }
 
     /// @notice Allows the admin to pick the winners for the current round.
     /// @dev Only admins are authorized to call this function.
@@ -117,12 +118,17 @@ contract MergingPool {
     /// @param winners The array of token IDs representing the winners.
     function pickWinner(uint256[] calldata winners) external {
         require(isAdmin[msg.sender]);
-        require(winners.length == winnersPerPeriod, "Incorrect number of winners");
+        require(
+            winners.length == winnersPerPeriod,
+            "Incorrect number of winners"
+        );
         require(!isSelectionComplete[roundId], "Winners are already selected");
         uint256 winnersLength = winners.length;
         address[] memory currentWinnerAddresses = new address[](winnersLength);
         for (uint256 i = 0; i < winnersLength; i++) {
-            currentWinnerAddresses[i] = _fighterFarmInstance.ownerOf(winners[i]);
+            currentWinnerAddresses[i] = _fighterFarmInstance.ownerOf(
+                winners[i]
+            );
             totalPoints -= fighterPoints[winners[i]];
             fighterPoints[winners[i]] = 0;
         }
@@ -137,16 +143,19 @@ contract MergingPool {
     /// @param modelTypes The array of model types corresponding to each round and winner address.
     /// @param customAttributes Array with [element, weight] of the newly created fighter.
     function claimRewards(
-        string[] calldata modelURIs, 
+        string[] calldata modelURIs,
         string[] calldata modelTypes,
         uint256[2][] calldata customAttributes
-    ) 
-        external 
-    {
+    ) external {
+        // @audit-issue if user has >= 10 wins, he wont be able to claim any rewards, since a user cannot have more than 10 fighters (defined in FighterFarm.sol)
         uint256 winnersLength;
         uint32 claimIndex = 0;
         uint32 lowerBound = numRoundsClaimed[msg.sender];
-        for (uint32 currentRound = lowerBound; currentRound < roundId; currentRound++) {
+        for (
+            uint32 currentRound = lowerBound;
+            currentRound < roundId;
+            currentRound++
+        ) {
             numRoundsClaimed[msg.sender] += 1;
             winnersLength = winnerAddresses[currentRound].length;
             for (uint32 j = 0; j < winnersLength; j++) {
@@ -169,11 +178,17 @@ contract MergingPool {
     /// @notice Gets the unclaimed rewards for a specific address.
     /// @param claimer The address of the claimer.
     /// @return numRewards The amount of unclaimed fighters.
-    function getUnclaimedRewards(address claimer) external view returns(uint256) {
+    function getUnclaimedRewards(
+        address claimer
+    ) external view returns (uint256) {
         uint256 winnersLength;
         uint256 numRewards = 0;
         uint32 lowerBound = numRoundsClaimed[claimer];
-        for (uint32 currentRound = lowerBound; currentRound < roundId; currentRound++) {
+        for (
+            uint32 currentRound = lowerBound;
+            currentRound < roundId;
+            currentRound++
+        ) {
             winnersLength = winnerAddresses[currentRound].length;
             for (uint32 j = 0; j < winnersLength; j++) {
                 if (claimer == winnerAddresses[currentRound][j]) {
@@ -186,14 +201,17 @@ contract MergingPool {
 
     /*//////////////////////////////////////////////////////////////
                             PUBLIC FUNCTIONS
-    //////////////////////////////////////////////////////////////*/    
+    //////////////////////////////////////////////////////////////*/
 
     /// @notice Add merging pool points to a fighter.
     /// @dev Only the rankedBattle contract address can call this function.
     /// @param tokenId The ID of the fighter token.
     /// @param points The number of points to be added to the fighter.
     function addPoints(uint256 tokenId, uint256 points) public {
-        require(msg.sender == _rankedBattleAddress, "Not Ranked Battle contract address");
+        require(
+            msg.sender == _rankedBattleAddress,
+            "Not Ranked Battle contract address"
+        );
         fighterPoints[tokenId] += points;
         totalPoints += points;
         emit PointsAdded(tokenId, points);
@@ -202,7 +220,9 @@ contract MergingPool {
     /// @notice Retrieves the points for multiple fighters up to the specified maximum token ID.
     /// @param maxId The maximum token ID up to which the points will be retrieved.
     /// @return An array of points corresponding to the fighters' token IDs.
-    function getFighterPoints(uint256 maxId) public view returns(uint256[] memory) {
+    function getFighterPoints(
+        uint256 maxId
+    ) public view returns (uint256[] memory) {
         uint256[] memory points = new uint256[](1);
         for (uint256 i = 0; i < maxId; i++) {
             points[i] = fighterPoints[i];

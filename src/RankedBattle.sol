@@ -1,20 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
-import { FighterFarm } from "./FighterFarm.sol";
-import { VoltageManager } from "./VoltageManager.sol";
-import { MergingPool } from "./MergingPool.sol";
-import { Neuron } from "./Neuron.sol";
-import { StakeAtRisk } from "./StakeAtRisk.sol";
-import { FixedPointMathLib } from './FixedPointMathLib.sol';
+import {FighterFarm} from "./FighterFarm.sol";
+import {VoltageManager} from "./VoltageManager.sol";
+import {MergingPool} from "./MergingPool.sol";
+import {Neuron} from "./Neuron.sol";
+import {StakeAtRisk} from "./StakeAtRisk.sol";
+import {FixedPointMathLib} from "./FixedPointMathLib.sol";
 
 /// @title RankedBattle
 /// @author ArenaX Labs Inc.
-/// @notice This contract provides functionality for staking NRN tokens on fighters, 
-/// tracking battle records, calculating and distributing rewards based on battle outcomes 
+/// @notice This contract provides functionality for staking NRN tokens on fighters,
+/// tracking battle records, calculating and distributing rewards based on battle outcomes
 /// and staked amounts, and allowing claiming of accumulated rewards.
 contract RankedBattle {
-
     /// @dev Extend functionality of the FixedPointMathLib library to the uint data type.
     using FixedPointMathLib for uint;
 
@@ -32,7 +31,7 @@ contract RankedBattle {
     event Claimed(address claimer, uint256 amount);
 
     /// @notice Event emitted when points are added or subtracted from a fighter.
-    event PointsChanged(uint256 tokenId, uint256 points, bool increased);    
+    event PointsChanged(uint256 tokenId, uint256 points, bool increased);
 
     /*//////////////////////////////////////////////////////////////
                                 STRUCTS
@@ -61,7 +60,7 @@ contract RankedBattle {
     /// @notice Current round number.
     uint256 public roundId = 0;
 
-    /// @notice Amount of basis points that get taken away from a player's stake when they lose in 
+    /// @notice Amount of basis points that get taken away from a player's stake when they lose in
     /// a point deficit.
     uint256 public bpsLostPerLoss = 10;
 
@@ -76,7 +75,7 @@ contract RankedBattle {
 
     /*//////////////////////////////////////////////////////////////
                             CONTRACT INSTANCES
-    //////////////////////////////////////////////////////////////*/ 
+    //////////////////////////////////////////////////////////////*/
 
     /// @notice The neuron contract instance.
     Neuron _neuronInstance;
@@ -110,10 +109,12 @@ contract RankedBattle {
     mapping(address => uint32) public numRoundsClaimed;
 
     /// @notice Maps address to round ID to track accumulated points.
-    mapping(address => mapping(uint256 => uint256)) public accumulatedPointsPerAddress;
+    mapping(address => mapping(uint256 => uint256))
+        public accumulatedPointsPerAddress;
 
     /// @notice Maps token ID to round ID to track accumulated points.
-    mapping(uint256 => mapping(uint256 => uint256)) public accumulatedPointsPerFighter;
+    mapping(uint256 => mapping(uint256 => uint256))
+        public accumulatedPointsPerFighter;
 
     /// @notice Maps round ID to total accumulated points.
     mapping(uint256 => uint256) public totalAccumulatedPoints;
@@ -137,24 +138,25 @@ contract RankedBattle {
                                CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice Initializes the contract by setting various addresses and instantiating 
-    /// contract instances. It also designates the owner address as an admin. 
+    /// @notice Initializes the contract by setting various addresses and instantiating
+    /// contract instances. It also designates the owner address as an admin.
     /// @param ownerAddress Address of contract deployer.
     /// @param gameServerAddress The game server address.
     /// @param fighterFarmAddress Address of the FighterFarm contract.
     /// @param voltageManagerAddress Address of the VoltageManager contract.
     constructor(
-      address ownerAddress, 
-      address gameServerAddress,
-      address fighterFarmAddress,
-      address voltageManagerAddress
+        address ownerAddress,
+        address gameServerAddress,
+        address fighterFarmAddress,
+        address voltageManagerAddress
     ) {
         _ownerAddress = ownerAddress;
         _gameServerAddress = gameServerAddress;
         _fighterFarmInstance = FighterFarm(fighterFarmAddress);
         _voltageManagerInstance = VoltageManager(voltageManagerAddress);
         isAdmin[_ownerAddress] = true;
-        rankedNrnDistribution[0] = 5000 * 10**18;
+        // @note where does this initial nrn comes from, no mint required?
+        rankedNrnDistribution[0] = 5000 * 10 ** 18;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -176,7 +178,7 @@ contract RankedBattle {
     function adjustAdminAccess(address adminAddress, bool access) external {
         require(msg.sender == _ownerAddress);
         isAdmin[adminAddress] = access;
-    }  
+    }
 
     /// @notice Sets the game server address.
     /// @dev Only the owner address is authorized to call this function.
@@ -206,8 +208,11 @@ contract RankedBattle {
     /// @notice Instantiates the merging pool contract.
     /// @dev Only the owner address is authorized to call this function.
     /// @param mergingPoolAddress The address of the MergingPool contract.
-    function instantiateMergingPoolContract(address mergingPoolAddress) external {
+    function instantiateMergingPoolContract(
+        address mergingPoolAddress
+    ) external {
         require(msg.sender == _ownerAddress);
+        // @audit-issue verify this contract have access to call _mergingPoolInstance.addPoints(0, 0);
         _mergingPoolInstance = MergingPool(mergingPoolAddress);
     }
 
@@ -215,9 +220,10 @@ contract RankedBattle {
     /// @dev Only admins are authorized to change the ranked NRN distribution.
     /// @dev newDistribution is NOT denominated in wei. As such, it is multiplied by 10**18.
     /// @param newDistribution The new distribution amount.
+    // @note admin can overwrite this multiple times, expected?
     function setRankedNrnDistribution(uint256 newDistribution) external {
         require(isAdmin[msg.sender]);
-        rankedNrnDistribution[roundId] = newDistribution * 10**18;
+        rankedNrnDistribution[roundId] = newDistribution * 10 ** 18;
     }
 
     /// @notice Sets the basis points lost per ranked match lost while in a point deficit.
@@ -230,8 +236,10 @@ contract RankedBattle {
 
     /// @notice Sets a new round, making claiming available for that round.
     /// @dev Only admins are authorized to move the round forward.
+    // @note both merging pool and this contract has roundID, it may potentially go out of sync?
     function setNewRound() external {
         require(isAdmin[msg.sender]);
+        // @note how to ensure totalAccumulatedPoints[roundId] > 0?
         require(totalAccumulatedPoints[roundId] > 0);
         roundId += 1;
         _stakeAtRiskInstance.setNewRound(roundId);
@@ -242,13 +250,27 @@ contract RankedBattle {
     /// @param amount The amount of NRN tokens to stake.
     /// @param tokenId The ID of the fighter to stake.
     function stakeNRN(uint256 amount, uint256 tokenId) external {
+        // @audit amount should be >= 10 ** 4, otherwise a fighter may not lose anything, refer to testNoNRNlossIfStakeTooSmall
         require(amount > 0, "Amount cannot be 0");
-        require(_fighterFarmInstance.ownerOf(tokenId) == msg.sender, "Caller does not own fighter");
-        require(_neuronInstance.balanceOf(msg.sender) >= amount, "Stake amount exceeds balance");
-        require(hasUnstaked[tokenId][roundId] == false, "Cannot add stake after unstaking this round");
+        require(
+            _fighterFarmInstance.ownerOf(tokenId) == msg.sender,
+            "Caller does not own fighter"
+        );
+        require(
+            _neuronInstance.balanceOf(msg.sender) >= amount,
+            "Stake amount exceeds balance"
+        );
+        require(
+            hasUnstaked[tokenId][roundId] == false,
+            "Cannot add stake after unstaking this round"
+        );
 
         _neuronInstance.approveStaker(msg.sender, address(this), amount);
-        bool success = _neuronInstance.transferFrom(msg.sender, address(this), amount);
+        bool success = _neuronInstance.transferFrom(
+            msg.sender,
+            address(this),
+            amount
+        );
         if (success) {
             if (amountStaked[tokenId] == 0) {
                 _fighterFarmInstance.updateFighterStaking(tokenId, true);
@@ -256,7 +278,7 @@ contract RankedBattle {
             amountStaked[tokenId] += amount;
             globalStakedAmount += amount;
             stakingFactor[tokenId] = _getStakingFactor(
-                tokenId, 
+                tokenId,
                 _stakeAtRiskInstance.getStakeAtRisk(tokenId)
             );
             _calculatedStakingFactor[tokenId][roundId] = true;
@@ -268,14 +290,20 @@ contract RankedBattle {
     /// @param amount The amount of NRN tokens to unstake.
     /// @param tokenId The ID of the token to unstake.
     function unstakeNRN(uint256 amount, uint256 tokenId) external {
-        require(_fighterFarmInstance.ownerOf(tokenId) == msg.sender, "Caller does not own fighter");
+        // @note if the user lost all NRN (due to stakeAtRisk), next round he still need to call this function with amount = 0 to unlock the fighter
+        // @audit if the user has all NRN at risk, in this round he can call this function to unlock the fighter & transfer to others
+        // one can keep transfer the fighter to new owner (so that new owner has voltage) and keeps fighting (since all NRN at risk and it'll lose nothing)
+        require(
+            _fighterFarmInstance.ownerOf(tokenId) == msg.sender,
+            "Caller does not own fighter"
+        );
         if (amount > amountStaked[tokenId]) {
             amount = amountStaked[tokenId];
         }
         amountStaked[tokenId] -= amount;
         globalStakedAmount -= amount;
         stakingFactor[tokenId] = _getStakingFactor(
-            tokenId, 
+            tokenId,
             _stakeAtRiskInstance.getStakeAtRisk(tokenId)
         );
         _calculatedStakingFactor[tokenId][roundId] = true;
@@ -292,15 +320,23 @@ contract RankedBattle {
     /// @notice Claims NRN tokens for the specified rounds.
     /// @dev Caller can only claim once per round.
     function claimNRN() external {
-        require(numRoundsClaimed[msg.sender] < roundId, "Already claimed NRNs for this period");
+        require(
+            numRoundsClaimed[msg.sender] < roundId,
+            "Already claimed NRNs for this period"
+        );
         uint256 claimableNRN = 0;
         uint256 nrnDistribution;
         uint32 lowerBound = numRoundsClaimed[msg.sender];
-        for (uint32 currentRound = lowerBound; currentRound < roundId; currentRound++) {
+        for (
+            uint32 currentRound = lowerBound;
+            currentRound < roundId;
+            currentRound++
+        ) {
             nrnDistribution = getNrnDistribution(currentRound);
-            claimableNRN += (
-                accumulatedPointsPerAddress[msg.sender][currentRound] * nrnDistribution   
-            ) / totalAccumulatedPoints[currentRound];
+            claimableNRN +=
+                (accumulatedPointsPerAddress[msg.sender][currentRound] *
+                    nrnDistribution) /
+                totalAccumulatedPoints[currentRound];
             numRoundsClaimed[msg.sender] += 1;
         }
         if (claimableNRN > 0) {
@@ -320,81 +356,98 @@ contract RankedBattle {
     /// @param eloFactor Multiple derived from ELO to be applied to the base points earned.
     /// @param initiatorBool Whether this was the fighter that initiated the battle or not
     function updateBattleRecord(
-        uint256 tokenId, 
+        uint256 tokenId,
         uint256 mergingPortion,
         uint8 battleResult,
         uint256 eloFactor,
         bool initiatorBool
-    ) 
-        external 
-    {   
+    ) external {
         require(msg.sender == _gameServerAddress);
         require(mergingPortion <= 100);
         address fighterOwner = _fighterFarmInstance.ownerOf(tokenId);
         require(
             !initiatorBool ||
-            _voltageManagerInstance.ownerVoltageReplenishTime(fighterOwner) <= block.timestamp || 
-            _voltageManagerInstance.ownerVoltage(fighterOwner) >= VOLTAGE_COST
+                _voltageManagerInstance.ownerVoltageReplenishTime(
+                    fighterOwner
+                ) <=
+                block.timestamp ||
+                _voltageManagerInstance.ownerVoltage(fighterOwner) >=
+                VOLTAGE_COST
         );
 
         _updateRecord(tokenId, battleResult);
         uint256 stakeAtRisk = _stakeAtRiskInstance.getStakeAtRisk(tokenId);
         if (amountStaked[tokenId] + stakeAtRisk > 0) {
-            _addResultPoints(battleResult, tokenId, eloFactor, mergingPortion, fighterOwner);
+            _addResultPoints(
+                battleResult,
+                tokenId,
+                eloFactor,
+                mergingPortion,
+                fighterOwner
+            );
         }
         if (initiatorBool) {
             _voltageManagerInstance.spendVoltage(fighterOwner, VOLTAGE_COST);
         }
+        // @note for 1 battle involve 2 fighters, this function will be call 2 times, hence totalBattles increase by 2
         totalBattles += 1;
     }
 
     /// @notice Gets the battle record for a token.
     /// @param tokenId The ID of the token.
     /// @return Record which is comprised of wins, ties, and losses for the token.
-    function getBattleRecord(uint256 tokenId) external view returns(uint32, uint32, uint32) {
-      return (
-          fighterBattleRecord[tokenId].wins, 
-          fighterBattleRecord[tokenId].ties, 
-          fighterBattleRecord[tokenId].loses
-      );
+    function getBattleRecord(
+        uint256 tokenId
+    ) external view returns (uint32, uint32, uint32) {
+        return (
+            fighterBattleRecord[tokenId].wins,
+            fighterBattleRecord[tokenId].ties,
+            fighterBattleRecord[tokenId].loses
+        );
     }
 
     /// @notice Gets the staking data for a token.
     /// @return Round id, nrns to be distributed, and total point tally
-    function getCurrentStakingData() external view returns(uint256, uint256, uint256) {
-      return (
-          roundId,
-          rankedNrnDistribution[roundId], 
-          totalAccumulatedPoints[roundId]
-      );
+    function getCurrentStakingData()
+        external
+        view
+        returns (uint256, uint256, uint256)
+    {
+        return (
+            roundId,
+            rankedNrnDistribution[roundId],
+            totalAccumulatedPoints[roundId]
+        );
     }
 
     /*//////////////////////////////////////////////////////////////
                             PUBLIC FUNCTIONS
-    //////////////////////////////////////////////////////////////*/    
+    //////////////////////////////////////////////////////////////*/
 
     /// @notice Retrieves the nrn distribution amount for the given round ID.
     /// @param roundId_ The round ID for which to get the nrn distribution.
     /// @return Distribution amount for the specified round ID.
-    function getNrnDistribution(uint256 roundId_) public view returns(uint256) {
+    function getNrnDistribution(
+        uint256 roundId_
+    ) public view returns (uint256) {
         return rankedNrnDistribution[roundId_];
     }
 
     /// @notice Gets the unclaimed NRN tokens for a specific address.
     /// @param claimer The address of the claimer.
     /// @return The amount of unclaimed NRN tokens.
-    function getUnclaimedNRN(address claimer) public view returns(uint256) {
+    function getUnclaimedNRN(address claimer) public view returns (uint256) {
         uint256 claimableNRN = 0;
-        uint256 nrnDistribution;   
+        uint256 nrnDistribution;
         uint32 lowerBound = numRoundsClaimed[claimer];
         for (uint32 i = lowerBound; i < roundId; i++) {
             nrnDistribution = getNrnDistribution(i);
-            claimableNRN += (
-                accumulatedPointsPerAddress[claimer][i] * nrnDistribution
-            ) / totalAccumulatedPoints[i];
+            claimableNRN +=
+                (accumulatedPointsPerAddress[claimer][i] * nrnDistribution) /
+                totalAccumulatedPoints[i];
         }
         return claimableNRN;
-    } 
+    }
 
     /*//////////////////////////////////////////////////////////////
                             PRIVATE FUNCTIONS
@@ -414,14 +467,12 @@ contract RankedBattle {
     /// @param mergingPortion The portion of points that get redirected to the merging pool.
     /// @param fighterOwner The address which owns the fighter whos points are being altered.
     function _addResultPoints(
-        uint8 battleResult, 
-        uint256 tokenId, 
-        uint256 eloFactor, 
+        uint8 battleResult,
+        uint256 tokenId,
+        uint256 eloFactor,
         uint256 mergingPortion,
         address fighterOwner
-    ) 
-        private 
-    {
+    ) private {
         uint256 stakeAtRisk;
         uint256 curStakeAtRisk;
         uint256 points = 0;
@@ -429,14 +480,17 @@ contract RankedBattle {
         /// Check how many NRNs the fighter has at risk
         stakeAtRisk = _stakeAtRiskInstance.getStakeAtRisk(tokenId);
 
-        /// Calculate the staking factor if it has not already been calculated for this round 
+        /// Calculate the staking factor if it has not already been calculated for this round
         if (_calculatedStakingFactor[tokenId][roundId] == false) {
             stakingFactor[tokenId] = _getStakingFactor(tokenId, stakeAtRisk);
             _calculatedStakingFactor[tokenId][roundId] = true;
         }
 
         /// Potential amount of NRNs to put at risk or retrieve from the stake-at-risk contract
-        curStakeAtRisk = (bpsLostPerLoss * (amountStaked[tokenId] + stakeAtRisk)) / 10**4;
+        // @audit testNoNRNlossIfStakeTooSmall
+        curStakeAtRisk =
+            (bpsLostPerLoss * (amountStaked[tokenId] + stakeAtRisk)) /
+            10 ** 4;
         if (battleResult == 0) {
             /// If the user won the match
 
@@ -446,6 +500,7 @@ contract RankedBattle {
             }
 
             /// Divert a portion of the points to the merging pool
+            // @audit-issue below 3 lines can also be put under above condition: if (stakeAtRisk == 0)
             uint256 mergingPoints = (points * mergingPortion) / 100;
             points -= mergingPoints;
             _mergingPoolInstance.addPoints(tokenId, mergingPoints);
@@ -458,7 +513,11 @@ contract RankedBattle {
             /// If the user has stake-at-risk for their fighter, reclaim a portion
             /// Reclaiming stake-at-risk puts the NRN back into their staking pool
             if (curStakeAtRisk > 0) {
-                _stakeAtRiskInstance.reclaimNRN(curStakeAtRisk, tokenId, fighterOwner);
+                _stakeAtRiskInstance.reclaimNRN(
+                    curStakeAtRisk,
+                    tokenId,
+                    fighterOwner
+                );
                 amountStaked[tokenId] += curStakeAtRisk;
             }
 
@@ -477,7 +536,7 @@ contract RankedBattle {
                 curStakeAtRisk = amountStaked[tokenId];
             }
             if (accumulatedPointsPerFighter[tokenId][roundId] > 0) {
-                /// If the fighter has a positive point balance for this round, deduct points 
+                /// If the fighter has a positive point balance for this round, deduct points
                 points = stakingFactor[tokenId] * eloFactor;
                 if (points > accumulatedPointsPerFighter[tokenId][roundId]) {
                     points = accumulatedPointsPerFighter[tokenId][roundId];
@@ -490,9 +549,16 @@ contract RankedBattle {
                 }
             } else {
                 /// If the fighter does not have any points for this round, NRNs become at risk of being lost
-                bool success = _neuronInstance.transfer(_stakeAtRiskAddress, curStakeAtRisk);
+                bool success = _neuronInstance.transfer(
+                    _stakeAtRiskAddress,
+                    curStakeAtRisk
+                );
                 if (success) {
-                    _stakeAtRiskInstance.updateAtRiskRecords(curStakeAtRisk, tokenId, fighterOwner);
+                    _stakeAtRiskInstance.updateAtRiskRecords(
+                        curStakeAtRisk,
+                        tokenId,
+                        fighterOwner
+                    );
                     amountStaked[tokenId] -= curStakeAtRisk;
                 }
             }
@@ -517,19 +583,15 @@ contract RankedBattle {
     /// @param stakeAtRisk The amount of stake they have at risk.
     /// @return Staking factor.
     function _getStakingFactor(
-        uint256 tokenId, 
+        uint256 tokenId,
         uint256 stakeAtRisk
-    ) 
-        private 
-        view 
-        returns (uint256) 
-    {
-      uint256 stakingFactor_ = FixedPointMathLib.sqrt(
-          (amountStaked[tokenId] + stakeAtRisk) / 10**18
-      );
-      if (stakingFactor_ == 0) {
-        stakingFactor_ = 1;
-      }
-      return stakingFactor_;
-    }    
+    ) private view returns (uint256) {
+        uint256 stakingFactor_ = FixedPointMathLib.sqrt(
+            (amountStaked[tokenId] + stakeAtRisk) / 10 ** 18
+        );
+        if (stakingFactor_ == 0) {
+            stakingFactor_ = 1;
+        }
+        return stakingFactor_;
+    }
 }

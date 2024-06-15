@@ -24,7 +24,8 @@ contract FighterFarmTest is Test {
     //////////////////////////////////////////////////////////////*/
 
     uint8[][] internal _probabilities;
-    address internal constant _DELEGATED_ADDRESS = 0x22F4441ad6DbD602dFdE5Cd8A38F6CAdE68860b0;
+    address internal constant _DELEGATED_ADDRESS =
+        0x22F4441ad6DbD602dFdE5Cd8A38F6CAdE68860b0;
     address internal _ownerAddress;
     address internal _treasuryAddress;
     address internal _neuronContributorAddress;
@@ -63,7 +64,11 @@ contract FighterFarmTest is Test {
         _neuronContributorAddress = vm.addr(2);
         getProb();
 
-        _fighterFarmContract = new FighterFarm(_ownerAddress, _DELEGATED_ADDRESS, _treasuryAddress);
+        _fighterFarmContract = new FighterFarm(
+            _ownerAddress,
+            _DELEGATED_ADDRESS,
+            _treasuryAddress
+        );
 
         _helperContract = new AiArenaHelper(_probabilities);
 
@@ -73,24 +78,49 @@ contract FighterFarmTest is Test {
 
         _gameItemsContract = new GameItems(_ownerAddress, _treasuryAddress);
 
-        _voltageManagerContract = new VoltageManager(_ownerAddress, address(_gameItemsContract));
-
-        _neuronContract = new Neuron(_ownerAddress, _treasuryAddress, _neuronContributorAddress);
-
-        _rankedBattleContract = new RankedBattle(
-            _ownerAddress, address(_fighterFarmContract), _DELEGATED_ADDRESS, address(_voltageManagerContract)
+        _voltageManagerContract = new VoltageManager(
+            _ownerAddress,
+            address(_gameItemsContract)
         );
 
-        _rankedBattleContract.instantiateNeuronContract(address(_neuronContract));
+        _neuronContract = new Neuron(
+            _ownerAddress,
+            _treasuryAddress,
+            _neuronContributorAddress
+        );
 
-        _mergingPoolContract =
-            new MergingPool(_ownerAddress, address(_rankedBattleContract), address(_fighterFarmContract));
+        _rankedBattleContract = new RankedBattle(
+            _ownerAddress,
+            address(_fighterFarmContract),
+            _DELEGATED_ADDRESS,
+            address(_voltageManagerContract)
+        );
 
-        _fighterFarmContract.setMergingPoolAddress(address(_mergingPoolContract));
-        _fighterFarmContract.instantiateAIArenaHelperContract(address(_helperContract));
-        _fighterFarmContract.instantiateMintpassContract(address(_mintPassContract));
-        _fighterFarmContract.instantiateNeuronContract(address(_neuronContract));
-        _fighterFarmContract.setMergingPoolAddress(address(_mergingPoolContract));
+        _rankedBattleContract.instantiateNeuronContract(
+            address(_neuronContract)
+        );
+
+        _mergingPoolContract = new MergingPool(
+            _ownerAddress,
+            address(_rankedBattleContract),
+            address(_fighterFarmContract)
+        );
+
+        _fighterFarmContract.setMergingPoolAddress(
+            address(_mergingPoolContract)
+        );
+        _fighterFarmContract.instantiateAIArenaHelperContract(
+            address(_helperContract)
+        );
+        _fighterFarmContract.instantiateMintpassContract(
+            address(_mintPassContract)
+        );
+        _fighterFarmContract.instantiateNeuronContract(
+            address(_neuronContract)
+        );
+        _fighterFarmContract.setMergingPoolAddress(
+            address(_mergingPoolContract)
+        );
     }
 
     /// @notice Test owner transferring ownership and new owner calling only owner functions.
@@ -129,7 +159,9 @@ contract FighterFarmTest is Test {
 
     /// @notice Test owner instantiating mint pass contract.
     function testInstantiateMintpassContractFromOwner() public {
-        _fighterFarmContract.instantiateMintpassContract(address(_mintPassContract));
+        _fighterFarmContract.instantiateMintpassContract(
+            address(_mintPassContract)
+        );
     }
 
     /// @notice Test that only the owner can instantiate the mintpass contract.
@@ -141,7 +173,9 @@ contract FighterFarmTest is Test {
 
     /// @notice Test owner setting the mergingpool contract address.
     function testSetMergingPoolAddressFromOwner() public {
-        _fighterFarmContract.setMergingPoolAddress(address(_mergingPoolContract));
+        _fighterFarmContract.setMergingPoolAddress(
+            address(_mergingPoolContract)
+        );
     }
 
     /// @notice Test that only the owner can set the mergingpool contract address.
@@ -186,13 +220,20 @@ contract FighterFarmTest is Test {
             hex"407c44926b6805cf9755a88022102a9cb21cde80a210bc3ad1db2880f6ea16fa4e1363e7817d5d87e4e64ba29d59aedfb64524620e2180f41ff82ca9edf942d01c"
         );
         string[] memory claimModelHashes = new string[](1);
-        claimModelHashes[0] = "ipfs://bafybeiaatcgqvzvz3wrjiqmz2ivcu2c5sqxgipv5w2hzy4pdlw7hfox42m";
+        claimModelHashes[
+            0
+        ] = "ipfs://bafybeiaatcgqvzvz3wrjiqmz2ivcu2c5sqxgipv5w2hzy4pdlw7hfox42m";
 
         string[] memory claimModelTypes = new string[](1);
         claimModelTypes[0] = "original";
 
         // Right sender of signature should be able to claim fighter
-        _fighterFarmContract.claimFighters(numToMint, claimSignature, claimModelHashes, claimModelTypes);
+        _fighterFarmContract.claimFighters(
+            numToMint,
+            claimSignature,
+            claimModelHashes,
+            claimModelTypes
+        );
         assertEq(_fighterFarmContract.balanceOf(_ownerAddress), 1);
         assertEq(_fighterFarmContract.ownerOf(0), _ownerAddress);
         assertEq(_fighterFarmContract.totalSupply(), 1);
@@ -206,7 +247,9 @@ contract FighterFarmTest is Test {
             hex"407c44926b6805cf9755a88022102a9cb21cde80a210bc3ad1db2880f6ea16fa4e1363e7817d5d87e4e64ba29d59aedfb64524620e2180f41ff82ca9edf942d01c"
         );
         string[] memory claimModelHashes = new string[](1);
-        claimModelHashes[0] = "ipfs://bafybeiaatcgqvzvz3wrjiqmz2ivcu2c5sqxgipv5w2hzy4pdlw7hfox42m";
+        claimModelHashes[
+            0
+        ] = "ipfs://bafybeiaatcgqvzvz3wrjiqmz2ivcu2c5sqxgipv5w2hzy4pdlw7hfox42m";
 
         string[] memory claimModelTypes = new string[](1);
         claimModelTypes[0] = "original";
@@ -214,7 +257,12 @@ contract FighterFarmTest is Test {
         // Test case: Wrong account of signature
         vm.prank(msg.sender);
         vm.expectRevert();
-        _fighterFarmContract.claimFighters(numToMint, claimSignature, claimModelHashes, claimModelTypes);
+        _fighterFarmContract.claimFighters(
+            numToMint,
+            claimSignature,
+            claimModelHashes,
+            claimModelTypes
+        );
     }
 
     /// @notice Test staking an fighter.
@@ -244,12 +292,15 @@ contract FighterFarmTest is Test {
             hex"20d5c3e5c6b1457ee95bb5ba0cbf35d70789bad27d94902c67ec738d18f665d84e316edf9b23c154054c7824bba508230449ee98970d7c8b25cc07f3918369481c"
         );
         string[] memory _tokenURIs = new string[](1);
-        _tokenURIs[0] = "ipfs://bafybeiaatcgqvzvz3wrjiqmz2ivcu2c5sqxgipv5w2hzy4pdlw7hfox42m";
+        _tokenURIs[
+            0
+        ] = "ipfs://bafybeiaatcgqvzvz3wrjiqmz2ivcu2c5sqxgipv5w2hzy4pdlw7hfox42m";
 
         // first i have to mint an nft from the mintpass contract
         assertEq(_mintPassContract.mintingPaused(), false);
         _mintPassContract.claimMintPass(numToMint, signature, _tokenURIs);
         assertEq(_mintPassContract.balanceOf(_ownerAddress), 1);
+        // @note how do you know the token id of the mintpass?
         assertEq(_mintPassContract.ownerOf(1), _ownerAddress);
 
         // once owning one i can then redeem it for a fighter
@@ -271,7 +322,12 @@ contract FighterFarmTest is Test {
         _mintPassContract.approve(address(_fighterFarmContract), 1);
 
         _fighterFarmContract.redeemMintPass(
-            _mintpassIdsToBurn, _fighterTypes, _iconsTypes, _mintPassDNAs, _neuralNetHashes, _modelTypes
+            _mintpassIdsToBurn,
+            _fighterTypes,
+            _iconsTypes,
+            _mintPassDNAs,
+            _neuralNetHashes,
+            _modelTypes
         );
 
         // check balance to see if we successfully redeemed the mintpass for a fighter
@@ -283,7 +339,12 @@ contract FighterFarmTest is Test {
     /// @notice Test that the merging pool contract can mint an fighter.
     function testMintFromMergingPool() public {
         vm.prank(address(_mergingPoolContract));
-        _fighterFarmContract.mintFromMergingPool(_ownerAddress, "_neuralNetHash", "original", [uint256(1), uint256(80)]);
+        _fighterFarmContract.mintFromMergingPool(
+            _ownerAddress,
+            "_neuralNetHash",
+            "original",
+            [uint256(1), uint256(80)]
+        );
         assertEq(_fighterFarmContract.balanceOf(_ownerAddress), 1);
         assertEq(_fighterFarmContract.ownerOf(0), _ownerAddress);
     }
@@ -325,14 +386,20 @@ contract FighterFarmTest is Test {
         _fundUserWith4kNeuronByTreasury(_ownerAddress);
         // after successfully minting a fighter, update the model
         if (_fighterFarmContract.ownerOf(0) == _ownerAddress) {
-            uint256 neuronBalanceBeforeReRoll = _neuronContract.balanceOf(_ownerAddress);
+            uint256 neuronBalanceBeforeReRoll = _neuronContract.balanceOf(
+                _ownerAddress
+            );
             uint8 tokenId = 0;
             uint8 fighterType = 0;
 
             _neuronContract.addSpender(address(_fighterFarmContract));
             _fighterFarmContract.reRoll(tokenId, fighterType);
             assertEq(_fighterFarmContract.numRerolls(0), 1);
-            assertEq(neuronBalanceBeforeReRoll > _neuronContract.balanceOf(_ownerAddress), true);
+            assertEq(
+                neuronBalanceBeforeReRoll >
+                    _neuronContract.balanceOf(_ownerAddress),
+                true
+            );
         }
     }
 
@@ -345,7 +412,9 @@ contract FighterFarmTest is Test {
         if (_fighterFarmContract.ownerOf(0) == _ownerAddress) {
             uint8 maxRerolls = _fighterFarmContract.maxRerollsAllowed(0);
             uint8 exceededLimit = maxRerolls + 1;
-            uint256 neuronBalanceBeforeReRoll = _neuronContract.balanceOf(_ownerAddress);
+            uint256 neuronBalanceBeforeReRoll = _neuronContract.balanceOf(
+                _ownerAddress
+            );
             uint8 tokenId = 0;
             uint8 fighterType = 0;
 
@@ -354,7 +423,11 @@ contract FighterFarmTest is Test {
                 if (i == (maxRerolls)) {
                     vm.expectRevert();
                     _fighterFarmContract.reRoll(tokenId, fighterType);
-                    assertEq(_neuronContract.balanceOf(_ownerAddress) < neuronBalanceBeforeReRoll, true);
+                    assertEq(
+                        _neuronContract.balanceOf(_ownerAddress) <
+                            neuronBalanceBeforeReRoll,
+                        true
+                    );
                 } else {
                     _fighterFarmContract.reRoll(tokenId, fighterType);
                 }
@@ -373,14 +446,18 @@ contract FighterFarmTest is Test {
     function testSafeTransferFrom() public {
         _mintFromMergingPool(_ownerAddress);
         assertEq(_fighterFarmContract.ownerOf(0), _ownerAddress);
-        _fighterFarmContract.safeTransferFrom(_ownerAddress, _DELEGATED_ADDRESS, 0);
+        _fighterFarmContract.safeTransferFrom(
+            _ownerAddress,
+            _DELEGATED_ADDRESS,
+            0
+        );
         assertEq(_fighterFarmContract.ownerOf(0), _DELEGATED_ADDRESS);
     }
 
     /// @notice Test getAllFighterInfo after minting a fighter and check if owner matches.
     function testGetAllFighterInfo() public {
         _mintFromMergingPool(_ownerAddress);
-        (address owner,,,,,,) = _fighterFarmContract.getAllFighterInfo(0);
+        (address owner, , , , , , ) = _fighterFarmContract.getAllFighterInfo(0);
         assertEq(owner == _fighterFarmContract.ownerOf(0), true);
     }
 
@@ -391,7 +468,12 @@ contract FighterFarmTest is Test {
     /// @notice Helper function to mint an fighter nft to an address.
     function _mintFromMergingPool(address to) internal {
         vm.prank(address(_mergingPoolContract));
-        _fighterFarmContract.mintFromMergingPool(to, "_neuralNetHash", "original", [uint256(1), uint256(80)]);
+        _fighterFarmContract.mintFromMergingPool(
+            to,
+            "_neuralNetHash",
+            "original",
+            [uint256(1), uint256(80)]
+        );
     }
 
     /// @notice Helper function to fund an account with 4k $NRN tokens.
@@ -401,7 +483,12 @@ contract FighterFarmTest is Test {
         assertEq(4_000 * 10 ** 18 == _neuronContract.balanceOf(user), true);
     }
 
-    function onERC721Received(address, address, uint256, bytes memory) public pure returns (bytes4) {
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes memory
+    ) public pure returns (bytes4) {
         // Handle the token transfer here
         return this.onERC721Received.selector;
     }

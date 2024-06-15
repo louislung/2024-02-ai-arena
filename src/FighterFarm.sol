@@ -151,6 +151,7 @@ contract FighterFarm is ERC721, ERC721Enumerable {
         address aiArenaHelperAddress
     ) external {
         require(msg.sender == _ownerAddress);
+        // @audit should ensure this function can only be called once? otherwise the owner is too powerful
         _aiArenaHelperInstance = AiArenaHelper(aiArenaHelperAddress);
     }
 
